@@ -1,0 +1,15 @@
+{
+  "allowed_mentions": {
+    "everyone": false,
+    "replied_user": true,
+    "roles": false,
+    "users": true
+  },
+  "case_insensitive": true,
+  "command_prefix": ["!", "?", ";"],
+  "owner_id": null,
+  "owner_ids": null,
+  "status": "online",
+  "strip_after_prefix": false,
+  "intents_payload": 37703
+}
