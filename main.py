@@ -30,7 +30,7 @@ def main():
     logger.info(f"Logs path: {log_path} - debug: {args.debug} - stream: {args.stream}")
 
     if not env_path.exists():
-        logger.ciritcal(f"Environment file {env_path} not found!")
+        logger.critical(f"Environment file {env_path} not found!")
         exit(1)
 
     config = Config(

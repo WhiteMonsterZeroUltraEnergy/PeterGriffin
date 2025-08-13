@@ -99,7 +99,7 @@ python3 main.py --debug
 #### Running the bot in the background
 
 ```
-nohup python3 bot.py >/dev/null 2>&1 &
+python3 main.py >/dev/null 2>&1 &
 ```
 
 ## Configuration

@@ -19,7 +19,7 @@ def parse_args():
     parser = argparse.ArgumentParser(
         usage="%(prog)s [options]",
         description="Opis Petera Griffin.",
-        epilog="See https://github.com/WhiteMonsterZeroUltraEnergy`",
+        epilog="See https://github.com/WhiteMonsterZeroUltraEnergy",
     )
     parser.add_argument("--debug", "-d", help="Enable debug mode", action="store_true")
     parser.add_argument(
@@ -32,11 +32,6 @@ def parse_args():
         "--config",
         help="Path to the config.json file (default: utils/config.json)",
         default="utils/config.json",
-    )
-    parser.add_argument(
-        "--activities",
-        help="Path to the activities.json file (default: utils/activities.json)",
-        default="utils/activities.json",
     )
     parser.add_argument(
         "--logs-path",
