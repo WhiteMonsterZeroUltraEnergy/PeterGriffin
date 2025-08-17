@@ -6,7 +6,7 @@
     "users": true
   },
   "case_insensitive": true,
-  "command_prefix": ["!", "?", ";"],
+  "command_prefix": [";"],
   "owner_id": null,
   "owner_ids": null,
   "status": "online",
