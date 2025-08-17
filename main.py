@@ -14,7 +14,7 @@ Description:
 """
 
 from core.discordbot import DiscordBot
-from utils.config import Config
+from core.config import Config
 from utils.logger import set_logger, logger
 from utils.tools import parse_args
 from pathlib import Path
