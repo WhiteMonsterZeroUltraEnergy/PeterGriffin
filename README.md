@@ -1,6 +1,4 @@
-# Peter Griffin
-
-![image](https://cdn.discordapp.com/attachments/1387294678931734640/1405055696063565834/Piotr.jpg?ex=689d6f96&is=689c1e16&hm=572677b05b013f8fcb15b1c60bc4e603ba09f9d560fdf8ed56ae2dd3158005b0&)
+# Piotr Gryf
 
 **Piotr Gryf** is a man of many talents, multidimensional, unconventional, unattainable for the beings of this world, modest but at the same time fond of showing his golden pearl claw, a mine of ideas, a monumental figure, an inspired leader, a polyglot and philosopher, a Nobel laureate, a scholar in speech and writing, the patriarch of the nation, Lech Wałęsa.
 
@@ -22,6 +20,7 @@
 Before launching the bot, make sure you have:
 
 - Python 3.8 or higher
+- Postgresql database
 - Fill in the .env file
 - Installed dependencies `requirements.txt` (see below)
 - Bot token generated on [Discord Developer Portal](https://discord.com/developers/applications)
@@ -104,9 +103,15 @@ python3 main.py >/dev/null 2>&1 &
 
 ## Configuration
 
+### config.js file
+
 **WiP**
 
 See `config.md`
+
+### PostgreSQL database
+
+**WiP**
 
 ## License
 
