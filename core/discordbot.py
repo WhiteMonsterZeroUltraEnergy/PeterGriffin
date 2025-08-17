@@ -11,12 +11,11 @@ Description:
 
 from pathlib import Path
 import discord
-from discord import app_commands
 from discord.ext import commands
 from discord.ext.commands import CommandNotFound, Context
 from core.database import Database
+from core.config import Config
 from utils.logger import logger
-from utils.config import Config
 
 
 class DiscordBot(commands.Bot):
@@ -51,7 +50,12 @@ class DiscordBot(commands.Bot):
         logger.warning(f"Bot {self.user} is offline.")
 
     async def setup_hook(self):
-        """The hook triggered when the bot starts is used to initialize extensions."""
+        """
+        Hook called when the bot starts up,
+        initializing the connection to the database,
+        clearing the module table, and loading extensions.
+        """
+        await self.db.connect()
         await self.load_extensions()
 
     async def on_ready(self):
@@ -92,20 +96,12 @@ class DiscordBot(commands.Bot):
             # Attempt to load module
             try:
                 await self.load_extension(ext)
-                logger.info(f"Module loaded: {ext}")
             except Exception as err:
                 logger.error(f"Loading error {ext}: {err}", exc_info=True)
-        # Synchronization of application commands (slash commands)
-        try:
-            synced = await self.tree.sync()
-            self.config.slash_commands_count = len(synced)
-            self.config.cogs_count = len(self.cogs)
-            logger.info(f"Synced {self.config.cogs_count} cogs.")
-            logger.info(
-                f"Synchronized {self.config.slash_commands_count} application commands."
-            )
-        except Exception as err:
-            logger.error(f"Command synchronization error: {err}", exc_info=True)
+            else:
+                logger.info(f"Module loaded: {ext}")
+                await self.register_cog_in_db(ext)
+        await self.sync_tree()
 
     async def on_command_error(self, ctx: Context, error: Exception):
         """
@@ -116,3 +112,39 @@ class DiscordBot(commands.Bot):
         if self.config.debug and isinstance(error, CommandNotFound):
             logger.debug(f"Command not found: {ctx.message.content}")
         return None
+
+    async def sync_tree(self):
+        """
+        Synchronizes the bot's application command tree with Discord,
+        updates the internal count of loaded cogs and slash commands,
+        and logs the results.
+        """
+        try:
+            synced = await self.tree.sync()
+        except Exception as err:
+            logger.error(f"Sync tree error: {err}", exc_info=True)
+        else:
+            self.config.slash_commands_count = len(synced)
+            self.config.cogs_count = len(self.cogs)
+            logger.info(f"Synced {self.config.cogs_count} cogs.")
+            logger.info(f"Synchronized {self.config.slash_commands_count} application slash commands.")
+
+    async def register_cog_in_db(self, cog_name: str):
+        """Adds an entry about cog to the database."""
+        try:
+            query = "INSERT INTO modules (name) VALUES ($1) ON CONFLICT DO NOTHING;"
+            await self.db.execute(query, cog_name)
+        except Exception as err:
+            logger.error(f"Postgresql: Failed to insert module {cog_name}: {err}", exc_info=True)
+        else:
+            logger.info(f"Postgresql: A module has been added: {cog_name}")
+
+    async def unregister_cog_in_db(self, cog_name: str):
+        """Removes the cog entry from the database."""
+        try:
+            query = "DELETE FROM modules WHERE \"name\" = $1;"
+            await self.db.execute(query, cog_name)
+        except Exception as err:
+            logger.error(f"Postgresql: Failed to remove module: {cog_name}: {err}", exc_info=True)
+        else:
+            logger.info(f"Postgresql: A module has been removed: {cog_name}")

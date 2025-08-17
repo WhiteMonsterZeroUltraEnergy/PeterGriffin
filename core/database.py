@@ -37,9 +37,12 @@ class Database:
                 user=self.user,
                 password=self.password,
                 command_timeout=60,
-                initcommand=f"SET search_path TO {self.schema}",
+                init=self._init_connection
             )
             logger.info(f"Postgresql: Connected to {self.host}:{self.port}")
+
+    async def _init_connection(self, conn):
+        await conn.execute(f"SET search_path TO {self.schema}")
 
     async def disconnect(self):
         if self.pool:
@@ -60,6 +63,7 @@ class Database:
             logger.warning(f"Postgresql: Not connected to {self.host}:{self.port}")
             return None
         async with self.pool.acquire() as conn:
+            await conn.execute(f"SET search_path TO {self.schema}")
             return await conn.execute(query, *args)
 
     async def fetch(self, query: str, *args) -> list[asyncpg.Record] | None:
@@ -75,6 +79,7 @@ class Database:
             logger.warning(f"Postgresql: Not connected to {self.host}:{self.port}")
             return None
         async with self.pool.acquire() as conn:
+            await conn.execute(f"SET search_path TO {self.schema}")
             return await conn.fetch(query, *args)
 
     async def fetchrow(self, query: str, *args) -> asyncpg.Record | None:
@@ -90,6 +95,7 @@ class Database:
             logger.warning(f"Postgresql: Not connected to {self.host}:{self.port}")
             return None
         async with self.pool.acquire() as conn:
+            await conn.execute(f"SET search_path TO {self.schema}")
             return await conn.fetchrow(query, *args)
 
     async def fetchval(self, query: str, *args):
@@ -105,4 +111,5 @@ class Database:
             logger.warning(f"Postgresql: Not connected to {self.host}:{self.port}")
             return None
         async with self.pool.acquire() as conn:
+            await conn.execute(f"SET search_path TO {self.schema}")
             return await conn.fetchval(query, *args)

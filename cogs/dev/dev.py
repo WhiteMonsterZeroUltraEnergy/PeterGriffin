@@ -14,116 +14,87 @@ class Dev(commands.Cog):
     @commands.is_owner()
     async def reload_cog(self, ctx: commands.Context, cog: str):
         """
-        Reloads the specified module (cog), allowing dynamic code updates without having to restart the bot.
-        This method uses `reload_extension` to first unload and then reload the selected module.
+        Reloads the specified cog using `reload_extension`,
+        and synchronizes the commands tree without restarting the bot.
 
-        :arg ctx: The context object of the command being invoked.
-        :arg cog: The name of the cog to reload.
+        :param ctx: The command invocation context.
+        :param cog: The name of the cog to reload.
         """
         module_name = f"cogs.{cog}"
         try:
             await self.bot.reload_extension(module_name)
-        except commands.ExtensionNotFound:
-            await ctx.reply(f"Cog `{module_name}` not found.")
+            await self.bot.sync_tree()
         except commands.ExtensionError as err:
             await ctx.reply(f"Error during reloading `{module_name}`:\n```py\n{err}```")
             logger.error(f"Error during reloading `{module_name}`", exc_info=err)
         else:
             await ctx.reply(f"Cog `{module_name}` has been successfully reloaded.")
             logger.info(f"Cog {module_name} reloaded by {ctx.author.id}.")
-        self.bot.config.cogs_count = len(self.bot.cogs)
 
     @commands.command()
     @commands.is_owner()
     async def reload_all_cogs(self, ctx: commands.Context):
         """
-        Reloads all currently loaded cogs found in the `./cogs/` directory.
-        Enables dynamic refresh of all extensions without having to restart the application.
-        It uses the `reload_extension` operation for each valid module.
+        Reloads all currently loaded cogs from the `./cogs/` directory,
+        and synchronizes the application commands tree without restarting the bot.
 
-        :arg ctx: The context object of the command being invoked.
+        :param ctx: The command invocation context.
         """
         for cog_name in list(self.bot.cogs.keys()):
             module_name = f"cogs.{cog_name.lower()}"
             try:
                 await self.bot.reload_extension(module_name)
+                await self.bot.sync_tree()
             except commands.ExtensionError as err:
-                await ctx.reply(
-                    f"Error during reloading `{module_name}`:\n```py\n{err}```"
-                )
+                await ctx.reply(f"Error during reloading `{module_name}`:\n```py\n{err}```")
                 logger.error(f"Error during reloading `{module_name}`", exc_info=err)
-        self.bot.config.cogs_count = len(self.bot.cogs)
-        await ctx.reply(
-            f"The `./cogs/` directory has been reloaded, `{self.bot.config.cogs_count}` cogs."
-        )
-        logger.info(f"The `./cogs/` directory has been reloaded by {ctx.author.id}.")
+            else:
+                await ctx.reply(f"The `./cogs/` directory has been reloaded, `{self.bot.config.cogs_count}` cogs.")
+                logger.info(f"The `./cogs/` directory has been reloaded by {ctx.author.id}.")
 
     @commands.command()
     @commands.is_owner()
     async def load_cog(self, ctx: commands.Context, cog: str):
         """
-        Loads the specified module (cog), allowing dynamic code updates without having to restart the bot.
-        This method uses `load_extension` to load the selected module.
+        Loads the specified cog into the bot, registers it in the database,
+        and synchronizes the application commands tree without restarting the bot.
 
-        :param ctx: The context object of the command being invoked.
-        :param cog: The name of the cog to load.
+        :param ctx: The command invocation context.
+        :param cog: The name of the cog (without the 'cogs.' prefix) to load.
         """
         module_name = f"cogs.{cog}"
         try:
             await self.bot.load_extension(module_name)
-        except commands.ExtensionNotFound:
-            await ctx.reply(f"Cog `{module_name}` not found.")
+            await self.bot.register_cog_in_db(module_name)
+            await self.bot.sync_tree()
         except commands.ExtensionError as err:
             await ctx.reply(f"Error during loading `{module_name}`:\n```py\n{err}```")
             logger.error(f"Error during loading `{module_name}`", exc_info=err)
         else:
             await ctx.reply(f"Cog `{module_name}` has been successfully loaded.")
             logger.info(f"Cog {module_name} loaded by {ctx.author.id}.")
-        self.bot.config.cogs_count = len(self.bot.cogs)
-
-    @commands.command()
-    @commands.is_owner()
-    async def load_all_cogs(self, ctx: commands.Context):
-        """
-        Loads all modules (cogs) located in the `./cogs/` directory.
-        Enables dynamic refresh of all extensions without having to restart the application.
-        It uses the `load_extensions` (in DiscordBot class) method,
-        which performs the `load_extension` operation for each valid module.
-
-        :arg ctx: The context object of the command being invoked.
-        """
-        await self.bot.load_extensions()
-        self.bot.config.cogs_count = len(self.bot.cogs)
-        await ctx.reply(
-            f"The `./cogs/` directory has been successfully loaded, `{self.bot.config.cogs_count}` cogs."
-        )
-        logger.info(f"Directory `./cogs/` loaded by {ctx.author.id}.")
 
     @commands.command()
     @commands.is_owner()
     async def unload_cog(self, ctx: commands.Context, cog: str):
         """
-        Disables the specified module (cog).
-        Allows you to dynamically remove a loaded module without having to restart the bot.
-        This method uses `unload_extension` to unload the selected module.
+        Unloads the specified cog from bot runtime, removes it from the database,
+        and syncs the application commands tree.
 
-        :arg ctx: The context object of the command being invoked.
-        :arg cog: The name of the cog to unload.
+        :arg ctx: The command invocation context.
+        :arg cog: The name of the cog (without the 'cogs.' prefix) to unload.
         """
         module_name = f"cogs.{cog}"
         try:
             await self.bot.unload_extension(module_name)
-        except commands.ExtensionNotFound:
-            await ctx.reply(f"Cog `{module_name}` not found.")
+            await self.bot.unregister_cog_in_db(module_name)
+            await self.bot.sync_tree()
         except commands.ExtensionError as err:
             await ctx.reply(f"Error when disabling `{module_name}`:\n```py\n{err}```")
             logger.error(f"Error when disabling `{module_name}`", exc_info=err)
         else:
             await ctx.reply(f"Cog `{module_name}` has been successfully unloaded.")
-            logger.info(
-                f"Cog {module_name} has been successfully unloaded by {ctx.author.id}"
-            )
-        self.bot.config.cogs_count = len(self.bot.cogs)
+            logger.info(f"Cog {module_name} has been successfully unloaded by {ctx.author.id}")
 
     @commands.command()
     @commands.is_owner()
@@ -140,7 +111,8 @@ class Dev(commands.Cog):
         embed.add_field(name="Uptime:", value=f"`{uptime_str}`", inline=True)
         embed.add_field(name="Status:", value=f"`{self.bot.config.status}`", inline=True)
         embed.add_field(name="Cogs:", value=f"`{self.bot.config.cogs_count}`", inline=True)
-        embed.add_field(name="Version discord.py:", value=f"`{discord.__version__}`", inline=True)
+        embed.add_field(name="Commands:", value=f"`{self.bot.config.slash_commands_count}`", inline=True)
+        embed.add_field(name="Version discord.py:", value=f"`{discord.__version__}`", inline=False)
         embed.set_footer(text=f"{self.bot.user}")
         # fmt: on
         await ctx.reply(embed=embed)
@@ -211,3 +183,55 @@ class Dev(commands.Cog):
         await ctx.reply(
             "Select the new status for the bot:", view=SelectStatus(self.bot)
         )
+
+    @commands.command()
+    @commands.is_owner()
+    async def list_cogs(self, ctx: commands.Context):
+        """Displays all currently loaded cogs."""
+        cogs = list(self.bot.cogs.keys())
+        embed = Embed(
+            title="Loaded Cogs",
+            color=discord.Color.blue(),
+            description="\n".join([f"`- {cog.lower()}`" for cog in cogs]),
+        )
+        await ctx.reply(embed=embed)
+
+    @commands.Cog.listener()
+    async def on_guild_join(self, guild):
+        query = "INSERT INTO guilds (guild_id) VALUES ($1) ON CONFLICT DO NOTHING;"
+        try:
+            await self.bot.db.execute(query, guild.id)
+        except Exception as err:
+            logger.error(f"Postgresql: Failed to insert guild: {err}", exc_info=True)
+
+    @commands.Cog.listener()
+    async def on_guild_remove(self, guild):
+        query = "DELETE FROM guilds WHERE guild_id = $1;"
+        try:
+            await self.bot.db.execute(query, guild.id)
+        except Exception as err:
+            logger.error(f"Postgresql: Failed to remove guild: {err}", exc_info=True)
+
+    #
+    # discord.errors.Forbidden: 403 Forbidden (error code: 50001): Missing Access
+    #
+    #@commands.Cog.listener()
+    #async def on_guild_join(self, guild):
+    #    system_channel = guild.system_channel
+    #    if system_channel is not None:
+    #        embed = Embed(
+    #            title=f"**Rodacy!**",
+    #            description=f"Przybywam do was jako syn tej ziemi, tego narodu, a zarazem, z niezbadanych wyroków Opatrzności, jako następca św. Piotra: na tej właśnie rzymskiej stolicy.\nDziękuję wam, żeście mnie zaprosili.\nWitam w duchu i obejmuję sercem każdego człowieka żyjącego na polskiej ziemi.",
+    #            color=discord.Color.green(),
+    #            timestamp=discord.utils.utcnow(),
+    #            url="https://github.com/WhiteMonsterZeroUltraEnergy/PeterGriffin"
+    #        )
+    #        embed.set_footer(text=f"{self.bot.user}")
+    #        await system_channel.send(embed=embed)
+    #
+    #
+    #@commands.Cog.listener()
+    #async def on_guild_remove(self, guild):
+    #    system_channel = guild.system_channel
+    #    if system_channel is not None:
+    #        await system_channel.send("Goodbye")
